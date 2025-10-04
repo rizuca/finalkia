@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSA Chat - Port 22113</title>
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+        }
+        
+        body { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px; 
+            min-height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        }
+        
+        .container { 
+            background: white; 
+            border-radius: 15px; 
+            padding: 25px; 
+            width: 100%; 
+            max-width: 450px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+        }
+        
+        .screen { 
+            display: none; 
+        }
+        
+        .active { 
+            display: block; 
+        }
+        
+        h1 { 
+            text-align: center; 
+            color: #128c7e; 
+            margin-bottom: 20px; 
+            font-size: 28px;
+        }
+        
+        .info-box { 
+            background: #e8f4f8; 
+            padding: 20px; 
+            border-radius: 10px; 
+            margin-bottom: 25px; 
+            border-left: 5px solid #128c7e; 
+        }
+        
+        .info-box p { 
+            margin-bottom: 8px; 
+            line-height: 1.4;
+        }
+        
+        .ip-form {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .ip-form input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .ip-form button {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .ip-form button:hover {
+            background: #e0a800;
+        }
+        
+        .link-box {
+            background: #d4edda;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #28a745;
+        }
+        
+        .link-box code {
+            background: #fff;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            display: block;
+            word-break: break-all;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+        }
+        
+        .form-group { 
+            margin-bottom: 20px; 
+        }
+        
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: bold; 
+            color: #128c7e; 
+            font-size: 14px;
+        }
+        
+        input { 
+            width: 100%; 
+            padding: 14px; 
+            border: 2px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            transition: border-color 0.3s;
+        }
+        
+        input:focus { 
+            border-color: #128c7e; 
+            outline: none;
+        }
+        
+        button { 
+            background: #128c7e; 
+            color: white; 
+            border: none; 
+            padding: 15px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            width: 100%; 
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        
+        button:hover { 
+            background: #0a6b5e; 
+        }
+        
+        button:disabled { 
+            background: #ccc; 
+            cursor: not-allowed; 
+        }
+        
+        .chat-container { 
+            border: 2px solid #ddd; 
+            border-radius: 12px; 
+            margin: 20px 0; 
+            overflow: hidden; 
+        }
+        
+        .chat-header { 
+            background: #128c7e; 
+            color: white; 
+            padding: 20px; 
+            text-align: center; 
+        }
+        
+        .chat-messages { 
+            height: 350px; 
+            overflow-y: auto; 
+            padding: 15px; 
+            background: #f0f0f0; 
+        }
+        
+        .message { 
+            margin: 12px 0; 
+            padding: 12px 16px; 
+            border-radius: 12px; 
+            max-width: 85%; 
+            word-wrap: break-word;
+        }
+        
+        .sent { 
+            background: #dcf8c6; 
+            margin-left: auto; 
+            border-bottom-right-radius: 4px; 
+        }
+        
+        .received { 
+            background: white; 
+            margin-right: auto; 
+            border-bottom-left-radius: 4px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .encrypted { 
+            font-family: 'Courier New', monospace; 
+            font-size: 12px; 
+            background: #f8f8f8; 
+            padding: 10px; 
+            border-radius: 6px; 
+            word-break: break-all; 
+            border: 1px solid #ddd;
+            line-height: 1.3;
+        }
+        
+        .message-info { 
+            font-size: 11px; 
+            color: #666; 
+            margin-top: 8px; 
+        }
+        
+        .chat-input { 
+            display: flex; 
+            padding: 15px; 
+            background: #f5f5f5; 
+            border-top: 1px solid #ddd; 
+        }
+        
+        .chat-input input { 
+            flex: 1; 
+            margin-right: 12px; 
+        }
+        
+        .chat-input button { 
+            width: auto; 
+            padding: 12px 20px;
+        }
+        
+        .status { 
+            text-align: center; 
+            padding: 10px; 
+            border-radius: 8px; 
+            margin: 15px 0; 
+            font-weight: bold;
+        }
+        
+        .connected { 
+            background: #4CAF50; 
+            color: white; 
+        }
+        
+        .disconnected { 
+            background: #f44336; 
+            color: white; 
+        }
+        
+        .system-msg { 
+            text-align: center; 
+            color: #666; 
+            font-style: italic; 
+            margin: 10px 0; 
+            padding: 8px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 6px;
+        }
+        
+        .back-btn { 
+            background: #666; 
+            margin-top: 15px; 
+        }
+        
+        .back-btn:hover { 
+            background: #555; 
+        }
+        
+        .user-count {
+            font-size: 12px;
+            margin-top: 5px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Room Screen -->
+        <div id="room-screen" class="screen active">
+            <h1>🔒 RSA Chat</h1>
+            <div class="info-box">
+                <p><strong>🛡️ Kunci RSA:</strong></p>
+                <p>🔑 Public: (7, 143)</p>
+                <p>🔒 Private: (103, 143)</p>
+                <p><strong>🌐 Port:</strong> 22113</p>
+                <p>Masukkan kode room yang sama di kedua perangkat!</p>
+            </div>
+            
+            <div class="ip-form">
+                <p><strong>🔧 Masukkan IP Server:</strong></p>
+                <input type="text" id="server-ip" placeholder="Contoh: 192.168.1.100" value=" ">
+                <button onclick="updateServerIP()">💾 Simpan IP Server</button>
+            </div>
+            
+            <div class="link-box">
+                <p><strong>📱 Link untuk perangkat lain:</strong></p>
+                <code id="external-link">http:// server-ip</code>
+                <small>Copy link ini ke perangkat kedua (HP/laptop lain)</small>
+            </div>
+            
+            <div class="form-group">
+                <label>🔑 Kode Room:</label>
+                <input type="text" id="room-code" value=" " placeholder="Masukkan kode room">
+            </div>
+            <div class="form-group">
+                <label>👤 Username:</label>
+                <input type="text" id="username" value=" " placeholder="Masukkan username">
+            </div>
+            <button onclick="joinRoom()">🚪 Masuk Room</button>
+            <div class="status disconnected" id="status">Status: Menunggu koneksi...</div>
+        </div>
+        
+        <!-- Chat Screen -->
+        <div id="chat-screen" class="screen">
+            <div class="chat-container">
+                <div class="chat-header">
+                    <h2>💬 RSA Chat Room</h2>
+                    <div id="room-info">Room: -</div>
+                    <div class="user-count" id="user-count">0 pengguna online</div>
+                    <div class="status disconnected" id="chat-status">Menghubungkan ke server...</div>
+                </div>
+                <div class="chat-messages" id="messages">
+                    <div class="system-msg">🎉 Selamat datang di RSA Chat! Pesan Anda akan terenkripsi.</div>
+                </div>
+                <div class="chat-input">
+                    <input type="text" id="message-input" placeholder="Ketik pesan Anda..." disabled>
+                    <button onclick="sendMessage()" id="send-btn" disabled>📤 Kirim</button>
+                </div>
+            </div>
+            <button class="back-btn" onclick="leaveRoom()">👋 Keluar Room</button>
+        </div>
+    </div>
+
+    <script>
+        // RSA Keys
+        const PUBLIC_KEY = { e: 7, n: 143 };
+        const PRIVATE_KEY = { d: 103, n: 143 };
+        
+        let ws = null;
+        let currentRoom = '';
+        let currentUsername = '';
+        let serverIP = '10.33.128.14'; // Default IP, bisa diubah
+
+        // Update server IP
+        function updateServerIP() {
+            const ipInput = document.getElementById('server-ip').value.trim();
+            if (ipInput) {
+                serverIP = ipInput;
+                updateExternalLink();
+                alert('✅ IP Server berhasil diupdate: ' + serverIP);
+            } else {
+                alert('❌ Masukkan IP Server yang valid!');
+            }
+        }
+
+        // Update external link display
+        function updateExternalLink() {
+            const externalLink = `http://${serverIP}:22113`;
+            document.getElementById('external-link').textContent = externalLink;
+        }
+
+        // RSA Functions
+        function modExp(base, exponent, modulus) {
+            if (modulus === 1) return 0;
+            let result = 1;
+            base = base % modulus;
+            while (exponent > 0) {
+                if (exponent % 2 === 1) result = (result * base) % modulus;
+                exponent = Math.floor(exponent / 2);
+                base = (base * base) % modulus;
+            }
+            return result;
+        }
+
+        function rsaEncrypt(message, publicKey) {
+            const { e, n } = publicKey;
+            let encrypted = [];
+            for (let i = 0; i < message.length; i++) {
+                let charCode = message.charCodeAt(i);
+                let encryptedChar = modExp(charCode, e, n);
+                encrypted.push(encryptedChar);
+            }
+            return encrypted.join(',');
+        }
+
+        function rsaDecrypt(encryptedMessage, privateKey) {
+            const { d, n } = privateKey;
+            let encryptedArray = encryptedMessage.split(',');
+            let decrypted = '';
+            for (let i = 0; i < encryptedArray.length; i++) {
+                let encryptedChar = parseInt(encryptedArray[i]);
+                let decryptedChar = modExp(encryptedChar, d, n);
+                decrypted += String.fromCharCode(decryptedChar);
+            }
+            return decrypted;
+        }
+
+        // WebSocket Connection
+        function joinRoom() {
+            currentRoom = document.getElementById('room-code').value.trim();
+            currentUsername = document.getElementById('username').value.trim();
+            
+            if (!currentRoom || !currentUsername) {
+                alert('❌ Harap isi kode room dan username!');
+                return;
+            }
+            
+            if (currentUsername.length < 2) {
+                alert('❌ Username minimal 2 karakter!');
+                return;
+            }
+            
+            // Use dynamic server IP
+            const wsUrl = `ws://${serverIP}:22113`;
+            
+            console.log('🔗 Connecting to:', wsUrl);
+            
+            // Show connecting status
+            updateStatus('disconnected', '🔄 Menghubungkan...');
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function() {
+                console.log('✅ Connected successfully!');
+                updateStatus('connected', '✅ Terhubung ke server');
+                
+                // Join room
+                ws.send(JSON.stringify({
+                    type: 'join_room',
+                    roomCode: currentRoom,
+                    username: currentUsername
+                }));
+                
+                // Switch to chat screen
+                document.getElementById('room-screen').classList.remove('active');
+                document.getElementById('chat-screen').classList.add('active');
+                
+                addSystemMessage('🔗 Terhubung ke room ' + currentRoom);
+            };
+            
+            ws.onclose = function() {
+                console.log('❌ Connection closed');
+                updateStatus('disconnected', '❌ Terputus dari server');
+                document.getElementById('message-input').disabled = true;
+                document.getElementById('send-btn').disabled = true;
+                
+                if (document.getElementById('chat-screen').classList.contains('active')) {
+                    addSystemMessage('❌ Koneksi terputus');
+                }
+            };
+            
+            ws.onerror = function(error) {
+                console.error('❌ WebSocket error:', error);
+                updateStatus('disconnected', '❌ Gagal menghubungkan');
+                
+                if (document.getElementById('room-screen').classList.contains('active')) {
+                    alert('❌ Gagal connect ke server. Pastikan:\n1. Server sedang berjalan\n2. IP Server benar: ' + serverIP + '\n3. Port 22113 terbuka');
+                }
+            };
+            
+            ws.onmessage = function(event) {
+                console.log('📩 Message received:', event.data);
+                const message = JSON.parse(event.data);
+                
+                if (message.type === 'room_joined') {
+                    document.getElementById('room-info').textContent = `Room: ${message.roomCode}`;
+                    document.getElementById('user-count').textContent = '1 pengguna online';
+                    document.getElementById('message-input').disabled = false;
+                    document.getElementById('send-btn').disabled = false;
+                    addSystemMessage('✅ ' + message.message);
+                }
+                else if (message.type === 'new_message') {
+                    try {
+                        const decrypted = rsaDecrypt(message.encryptedMessage, PRIVATE_KEY);
+                        addMessage(decrypted, false, message.username);
+                    } catch (error) {
+                        console.error('❌ Decryption error:', error);
+                        addSystemMessage('❌ Gagal mendekripsi pesan');
+                    }
+                }
+            };
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message) {
+                alert('❌ Pesan tidak boleh kosong!');
+                return;
+            }
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const encrypted = rsaEncrypt(message, PUBLIC_KEY);
+                
+                ws.send(JSON.stringify({
+                    type: 'send_message',
+                    roomCode: currentRoom,
+                    encryptedMessage: encrypted,
+                    username: currentUsername
+                }));
+                
+                // Add encrypted message to chat (sender sees only encryption)
+                addMessage(encrypted, true);
+                input.value = '';
+            } else {
+                alert('❌ Tidak terhubung ke server!');
+                updateStatus('disconnected', '❌ Koneksi terputus');
+            }
+        }
+
+        function addMessage(message, isSent, sender = '') {
+            const chat = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.className = `message ${isSent ? 'sent' : 'received'}`;
+            
+            if (isSent) {
+                div.innerHTML = `
+                    <div class="encrypted">${message}</div>
+                    <div class="message-info">👤 Anda - ${new Date().toLocaleTimeString()}</div>
+                `;
+            } else {
+                div.innerHTML = `
+                    <div>${message}</div>
+                    <div class="message-info">👤 ${sender} - ${new Date().toLocaleTimeString()}</div>
+                `;
+            }
+            
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function addSystemMessage(text) {
+            const chat = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.className = 'system-msg';
+            div.textContent = text;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function updateStatus(status, text) {
+            const element = document.getElementById('chat-status');
+            element.textContent = text;
+            element.className = `status ${status}`;
+        }
+
+        function leaveRoom() {
+            if (ws) {
+                ws.close();
+            }
+            document.getElementById('chat-screen').classList.remove('active');
+            document.getElementById('room-screen').classList.add('active');
+            document.getElementById('messages').innerHTML = '<div class="system-msg">🎉 Selamat datang di RSA Chat! Pesan Anda akan terenkripsi.</div>';
+            document.getElementById('message-input').value = '';
+        }
+
+        // Enter key to send message
+        document.getElementById('message-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Auto-focus on room code input
+        document.getElementById('room-code').focus();
+        
+        // Update external link on page load
+        updateExternalLink();
+    </script>
+</body>
+</html>
